@@ -1,0 +1,16 @@
+{
+  "name": "chatku-v2",
+  "version": "2.0.0",
+  "description": "Chat real-time login username+password, kirim gambar/video/dokumen/voice note, video & voice call",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "bcryptjs": "^2.4.3",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.1"
+  }
+}
