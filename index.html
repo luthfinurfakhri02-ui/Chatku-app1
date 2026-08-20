@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ChatKu</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#075e54">
+<link rel="icon" href="img/icon-192.png">
+<link rel="apple-touch-icon" href="img/icon-192.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:'Segoe UI',Roboto,Arial,sans-serif}
+html,body{height:100%;background:#0b141a;overscroll-behavior:none}
+.hidden{display:none!important}
+button{cursor:pointer}
+
+/* ===== AUTH ===== */
+#authScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#075e54,#0b141a 60%);padding:20px
+}
+.auth-card{
+  width:100%;max-width:360px;background:#111b21;border-radius:20px;
+  padding:32px 24px;box-shadow:0 20px 60px rgba(0,0,0,.4)
+}
+.auth-logo{
+  width:64px;height:64px;border-radius:16px;background:#25d366;
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+  margin:0 auto 16px
+}
+.auth-title{color:#e9edef;font-size:22px;font-weight:700;text-align:center}
+.auth-sub{color:#8696a0;font-size:12px;text-align:center;margin-top:6px;margin-bottom:22px}
+.auth-field{margin-bottom:12px}
+.auth-field input{
+  width:100%;padding:14px 16px;border-radius:12px;border:1px solid #2a3942;
+  background:#202c33;color:#e9edef;font-size:14px;outline:none
+}
+.auth-field input:focus{border-color:#25d366}
+.auth-btn{
+  width:100%;margin-top:8px;padding:14px;border:0;border-radius:12px;
+  background:#25d366;color:#0b141a;font-weight:800;font-size:14px
+}
+.auth-switch{text-align:center;color:#8696a0;font-size:12px;margin-top:16px}
+.auth-switch b{color:#25d366;cursor:pointer}
+.auth-error{color:#ff6b6b;font-size:11px;min-height:16px;margin-top:8px;text-align:center}
+
+/* ===== APP ===== */
+#app{
+  display:none;width:100%;max-width:480px;min-height:100vh;margin:auto;
+  background:#0b141a;position:relative
+}
+#app.show{display:flex;flex-direction:column}
+
+.header{
+  background:#202c33;padding:14px 16px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:20
+}
+.header-left{display:flex;align-items:center;gap:10px}
+.avatar{
+  width:36px;height:36px;border-radius:50%;background:#25d366;
+  display:flex;align-items:center;justify-content:center;font-weight:800;
+  color:#0b141a;font-size:14px
+}
+.header-title{color:#e9edef;font-weight:700;font-size:16px}
+.header-sub{color:#8696a0;font-size:10px}
+.logout-btn{
+  background:none;border:1px solid #2a3942;color:#8696a0;border-radius:8px;
+  padding:7px 12px;font-size:11px
+}
+
+#contactView{flex:1;overflow-y:auto}
+.contact-item{
+  display:flex;align-items:center;gap:12px;padding:13px 16px;
+  border-bottom:1px solid #1c262c
+}
+.contact-item:active{background:#202c33}
+.contact-avatar{
+  width:46px;height:46px;border-radius:50%;background:#2a3942;
+  display:flex;align-items:center;justify-content:center;font-weight:800;
+  color:#25d366;font-size:16px;flex-shrink:0
+}
+.contact-name{color:#e9edef;font-size:14px;font-weight:600}
+.contact-status{color:#25d366;font-size:11px;margin-top:2px}
+.empty-contacts{text-align:center;color:#8696a0;font-size:12px;padding:60px 20px;line-height:1.8}
+
+/* ===== CHAT ===== */
+#chatView{
+  display:none;flex:1;flex-direction:column;position:fixed;inset:0;
+  background:#0b141a;z-index:30;max-width:480px;margin:auto
+}
+#chatView.show{display:flex}
+.chat-header{
+  background:#202c33;padding:10px 14px;display:flex;align-items:center;gap:8px
+}
+.back-btn{background:none;border:0;color:#e9edef;font-size:20px;padding:4px 6px}
+.chat-title{color:#e9edef;font-weight:700;font-size:15px;flex:1}
+.call-icon-btn{
+  background:none;border:0;color:#25d366;font-size:19px;padding:4px 8px
+}
+.chat-messages{flex:1;overflow-y:auto;padding:14px 12px;background:#0b141a}
+.msg-row{display:flex;margin-bottom:9px}
+.msg-row.me{justify-content:flex-end}
+.bubble{max-width:75%;padding:8px 10px;border-radius:12px;font-size:13.5px;line-height:1.4;word-wrap:break-word}
+.msg-row.me .bubble{background:#005c4b;color:#e9edef;border-bottom-right-radius:2px}
+.msg-row.other .bubble{background:#202c33;color:#e9edef;border-bottom-left-radius:2px}
+.bubble-time{display:block;margin-top:4px;font-size:9px;color:#8696a0;text-align:right}
+.bubble img{max-width:100%;border-radius:8px;display:block;margin-bottom:4px}
+.bubble video{max-width:100%;border-radius:8px;display:block;margin-bottom:4px}
+.bubble audio{max-width:220px;margin-bottom:4px}
+.doc-chip{
+  display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);
+  padding:8px;border-radius:8px;margin-bottom:4px
+}
+.doc-chip a{color:#25d366;font-size:12px;text-decoration:none;word-break:break-all}
+
+.chat-input-bar{display:flex;gap:6px;padding:10px;background:#111b21;align-items:center}
+.icon-btn{
+  width:38px;height:38px;border-radius:50%;border:0;background:#2a3942;
+  color:#e9edef;font-size:16px;flex-shrink:0
+}
+.icon-btn.recording{background:#ff5470}
+#msgInput{
+  flex:1;padding:11px 15px;border-radius:24px;border:0;background:#2a3942;
+  color:#e9edef;font-size:14px;outline:none;min-width:0
+}
+.send-btn{
+  width:42px;height:42px;border-radius:50%;border:0;background:#25d366;
+  color:#0b141a;font-size:17px;flex-shrink:0
+}
+.typing-hint{color:#8696a0;font-size:10px;padding:2px 14px;min-height:16px}
+#fileInputHidden{display:none}
+
+/* ===== CALL OVERLAY ===== */
+#callOverlay{
+  position:fixed;inset:0;background:#0b141a;z-index:100;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  max-width:480px;margin:auto
+}
+#callOverlay.show{display:flex}
+.call-avatar{
+  width:100px;height:100px;border-radius:50%;background:#25d366;
+  display:flex;align-items:center;justify-content:center;font-size:40px;
+  font-weight:800;color:#0b141a;margin-bottom:20px
+}
+.call-username{color:#e9edef;font-size:20px;font-weight:700}
+.call-status{color:#8696a0;font-size:13px;margin-top:8px}
+.call-actions{display:flex;gap:24px;margin-top:50px}
+.call-btn{
+  width:60px;height:60px;border-radius:50%;border:0;font-size:24px;
+  display:flex;align-items:center;justify-content:center
+}
+.call-btn.accept{background:#25d366;color:#0b141a}
+.call-btn.reject{background:#ff5470;color:#fff}
+.call-btn.end{background:#ff5470;color:#fff}
+#remoteVideo{
+  width:100%;height:100%;object-fit:cover;position:absolute;inset:0;
+  background:#000
+}
+#localVideo{
+  width:110px;height:150px;border-radius:12px;position:absolute;
+  top:20px;right:16px;object-fit:cover;z-index:5;background:#111;
+  border:2px solid #25d366
+}
+.call-controls-bottom{
+  position:absolute;bottom:40px;left:0;right:0;display:flex;
+  justify-content:center;gap:20px;z-index:6
+}
+</style>
+</head>
+<body>
+
+<!-- ===== AUTH ===== -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">💬</div>
+    <div class="auth-title" id="authTitle">Masuk ke ChatKu</div>
+    <div class="auth-sub" id="authSub">Login pakai username, bukan nomor HP</div>
+
+    <div class="auth-field">
+      <input id="authUsername" type="text" placeholder="Username" autocomplete="off">
+    </div>
+    <div class="auth-field">
+      <input id="authPassword" type="password" placeholder="Password" autocomplete="off">
+    </div>
+    <button class="auth-btn" id="authSubmitBtn">MASUK</button>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-switch" id="authSwitch">Belum punya akun? <b id="authSwitchLink">Daftar di sini</b></div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="avatar" id="myAvatar">?</div>
+      <div>
+        <div class="header-title">ChatKu</div>
+        <div class="header-sub" id="myUsernameLabel"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="logout-btn" id="addContactBtn" style="background:#25d366;color:#0b141a;border-color:#25d366">➕ Kontak</button>
+      <button class="logout-btn" id="logoutBtn">Keluar</button>
+    </div>
+  </div>
+
+  <div id="contactView">
+    <div class="empty-contacts" id="emptyContacts">
+      Belum ada kontak.<br>
+      Ketuk tombol <b>➕ Kontak</b> di atas, masukkan username temanmu
+      (harus sudah punya akun) 👋
+    </div>
+    <div id="contactList"></div>
+  </div>
+</div>
+
+<!-- ===== CHAT ROOM ===== -->
+<div id="chatView">
+  <div class="chat-header">
+    <button class="back-btn" id="backBtn">◀️</button>
+    <div class="chat-title" id="chatWithLabel"></div>
+    <button class="call-icon-btn" id="voiceCallBtn">📞</button>
+    <button class="call-icon-btn" id="videoCallBtn">🎥</button>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="typing-hint" id="typingHint"></div>
+  <div class="chat-input-bar">
+    <button class="icon-btn" id="attachBtn">📎</button>
+    <input id="msgInput" type="text" placeholder="Tulis pesan..." autocomplete="off">
+    <button class="icon-btn" id="micBtn">🎤</button>
+    <button class="send-btn" id="sendBtn">➤</button>
+  </div>
+  <input type="file" id="fileInputHidden" accept="image/*,video/*,.pdf,.doc,.docx,.xlsx,.zip">
+</div>
+
+<!-- ===== CALL OVERLAY ===== -->
+<div id="callOverlay">
+  <video id="remoteVideo" autoplay playsinline class="hidden"></video>
+  <video id="localVideo" autoplay playsinline muted class="hidden"></video>
+
+  <div id="callInfo" style="z-index:6;text-align:center">
+    <div class="call-avatar" id="callAvatar">?</div>
+    <div class="call-username" id="callUsername"></div>
+    <div class="call-status" id="callStatus">Menghubungi...</div>
+  </div>
+
+  <div class="call-actions" id="incomingCallActions" style="display:none">
+    <button class="call-btn reject" id="rejectCallBtn">✕</button>
+    <button class="call-btn accept" id="acceptCallBtn">✓</button>
+  </div>
+
+  <div class="call-controls-bottom hidden" id="activeCallControls">
+    <button class="call-btn end" id="endCallBtn">✕</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+let myUsername = null;
+let myToken = localStorage.getItem("chatku_token") || null;
+let currentChatWith = null;
+let isRegisterMode = false;
+
+const authScreen = document.getElementById("authScreen");
+const authTitle = document.getElementById("authTitle");
+const authUsername = document.getElementById("authUsername");
+const authPassword = document.getElementById("authPassword");
+const authSubmitBtn = document.getElementById("authSubmitBtn");
+const authError = document.getElementById("authError");
+let authSwitchLinkEl = document.getElementById("authSwitchLink");
+const authSwitch = document.getElementById("authSwitch");
+
+const app = document.getElementById("app");
+const myAvatar = document.getElementById("myAvatar");
+const myUsernameLabel = document.getElementById("myUsernameLabel");
+const contactList = document.getElementById("contactList");
+const emptyContacts = document.getElementById("emptyContacts");
+const logoutBtn = document.getElementById("logoutBtn");
+
+const chatView = document.getElementById("chatView");
+const chatWithLabel = document.getElementById("chatWithLabel");
+const chatMessages = document.getElementById("chatMessages");
+const backBtn = document.getElementById("backBtn");
+const msgInput = document.getElementById("msgInput");
+const sendBtn = document.getElementById("sendBtn");
+const typingHint = document.getElementById("typingHint");
+const attachBtn = document.getElementById("attachBtn");
+const fileInputHidden = document.getElementById("fileInputHidden");
+const micBtn = document.getElementById("micBtn");
+
+const voiceCallBtn = document.getElementById("voiceCallBtn");
+const videoCallBtn = document.getElementById("videoCallBtn");
+const callOverlay = document.getElementById("callOverlay");
+const remoteVideo = document.getElementById("remoteVideo");
+const localVideo = document.getElementById("localVideo");
+const callAvatar = document.getElementById("callAvatar");
+const callUsername = document.getElementById("callUsername");
+const callStatus = document.getElementById("callStatus");
+const incomingCallActions = document.getElementById("incomingCallActions");
+const acceptCallBtn = document.getElementById("acceptCallBtn");
+const rejectCallBtn = document.getElementById("rejectCallBtn");
+const activeCallControls = document.getElementById("activeCallControls");
+const endCallBtn = document.getElementById("endCallBtn");
+
+function escapeHTML(v){
+  return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function fmtTime(ts){
+  return new Date(ts).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
+}
+
+// ===== AUTH =====
+function bindAuthSwitch(){
+  authSwitchLinkEl = document.getElementById("authSwitchLink");
+  authSwitchLinkEl.onclick = () => {
+    isRegisterMode = !isRegisterMode;
+    authTitle.textContent = isRegisterMode ? "Daftar Akun ChatKu" : "Masuk ke ChatKu";
+    authSubmitBtn.textContent = isRegisterMode ? "DAFTAR" : "MASUK";
+    authSwitch.innerHTML = isRegisterMode
+      ? 'Sudah punya akun? <b id="authSwitchLink">Masuk di sini</b>'
+      : 'Belum punya akun? <b id="authSwitchLink">Daftar di sini</b>';
+    authError.textContent = "";
+    bindAuthSwitch();
+  };
+}
+bindAuthSwitch();
+
+authSubmitBtn.onclick = async () => {
+  const username = authUsername.value.trim();
+  const password = authPassword.value;
+  authError.textContent = "";
+
+  if(!username || !password){
+    authError.textContent = "Isi username dan password.";
+    return;
+  }
+
+  const endpoint = isRegisterMode ? "/api/register" : "/api/login";
+  try{
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if(!data.ok){
+      authError.textContent = data.message;
+      return;
+    }
+    myToken = data.token;
+    localStorage.setItem("chatku_token", myToken);
+    connectSocket();
+  }catch(e){
+    authError.textContent = "Gagal terhubung ke server.";
+  }
+};
+
+function showApp(username){
+  myUsername = username;
+  myAvatar.textContent = username[0].toUpperCase();
+  myUsernameLabel.textContent = "@" + username;
+  authScreen.classList.add("hidden");
+  app.classList.add("show");
+  socket.emit("get-contacts");
+}
+
+function connectSocket(){
+  socket.emit("auth", myToken, (res) => {
+    if(!res.ok){
+      localStorage.removeItem("chatku_token");
+      myToken = null;
+      authError.textContent = res.message || "Sesi habis, silakan login lagi.";
+      return;
+    }
+    showApp(res.username);
+  });
+}
+
+logoutBtn.onclick = () => {
+  localStorage.removeItem("chatku_token");
+  location.reload();
+};
+
+// auto-login: jalan tiap kali socket connect/reconnect (misal ganti jaringan)
+if(myToken){
+  if(socket.connected) connectSocket();
+  socket.on("connect", () => connectSocket());
+}
+
+// ===== KONTAK (permanen, gak hilang walau offline) =====
+let myContacts = []; // [{username, online}]
+let onlineSet = new Set();
+
+function renderContacts(){
+  if(!myContacts.length){
+    emptyContacts.classList.remove("hidden");
+    contactList.innerHTML = "";
+    return;
+  }
+  emptyContacts.classList.add("hidden");
+  contactList.innerHTML = "";
+  myContacts
+    .slice()
+    .sort((a,b) => (onlineSet.has(b.username)?1:0) - (onlineSet.has(a.username)?1:0))
+    .forEach(c => {
+      const isOnline = onlineSet.has(c.username);
+      const item = document.createElement("div");
+      item.className = "contact-item";
+      item.innerHTML = `
+        <div class="contact-avatar" style="position:relative">
+          ${c.username[0].toUpperCase()}
+          <div style="position:absolute;bottom:-1px;right:-1px;width:12px;height:12px;border-radius:50%;
+            background:${isOnline?'#25d366':'#5a6a75'};border:2px solid #0b141a"></div>
+        </div>
+        <div>
+          <div class="contact-name">@${c.username}</div>
+          <div class="contact-status" style="color:${isOnline?'#25d366':'#8696a0'}">${isOnline?'Online':'Offline'}</div>
+        </div>
+      `;
+      item.onclick = () => openChat(c.username);
+      contactList.appendChild(item);
+    });
+}
+
+socket.on("contacts-list", (contacts) => {
+  myContacts = contacts;
+  renderContacts();
+});
+
+socket.on("online-users", (usersOnline) => {
+  onlineSet = new Set(usersOnline.filter(u => u !== myUsername));
+  renderContacts();
+});
+
+document.getElementById("addContactBtn").onclick = () => {
+  const username = prompt("Masukkan username teman (harus sudah punya akun):");
+  if(!username || !username.trim()) return;
+  socket.emit("add-contact", username.trim(), (res) => {
+    if(!res.ok){
+      alert(res.message);
+      return;
+    }
+    myContacts = res.contacts;
+    renderContacts();
+  });
+};
+
+// ===== CHAT =====
+function openChat(withUser){
+  currentChatWith = withUser;
+  chatWithLabel.textContent = "@" + withUser;
+  chatMessages.innerHTML = "";
+  chatView.classList.add("show");
+  socket.emit("get-history", { withUser });
+  setTimeout(()=>msgInput.focus(), 200);
+}
+backBtn.onclick = () => {
+  chatView.classList.remove("show");
+  currentChatWith = null;
+};
+
+function renderMessage(m){
+  const row = document.createElement("div");
+  row.className = "msg-row " + (m.from === myUsername ? "me" : "other");
+
+  let inner = "";
+  if(m.type === "image"){
+    inner = `<img src="${m.fileUrl}" alt="gambar">`;
+  }else if(m.type === "video"){
+    inner = `<video src="${m.fileUrl}" controls></video>`;
+  }else if(m.type === "voice"){
+    inner = `<audio src="${m.fileUrl}" controls></audio>`;
+  }else if(m.type === "document"){
+    inner = `<div class="doc-chip">📄 <a href="${m.fileUrl}" target="_blank">${escapeHTML(m.fileName||"Dokumen")}</a></div>`;
+  }
+
+  row.innerHTML = `
+    <div class="bubble">
+      ${inner}
+      ${m.text ? escapeHTML(m.text) : ""}
+      <span class="bubble-time">${fmtTime(m.time)}</span>
+    </div>
+  `;
+  chatMessages.appendChild(row);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+socket.on("history", ({withUser, messages}) => {
+  if(withUser !== currentChatWith) return;
+  chatMessages.innerHTML = "";
+  messages.forEach(renderMessage);
+});
+
+socket.on("private-message", (m) => {
+  const isForThisChat =
+    (m.from === currentChatWith && m.to === myUsername) ||
+    (m.from === myUsername && m.to === currentChatWith);
+  if(isForThisChat) renderMessage(m);
+});
+
+socket.on("typing", ({from}) => {
+  if(from !== currentChatWith) return;
+  typingHint.textContent = `@${from} sedang mengetik...`;
+  clearTimeout(socket._typingTimer);
+  socket._typingTimer = setTimeout(()=>{ typingHint.textContent = ""; }, 1500);
+});
+
+function sendTextMessage(){
+  const text = msgInput.value.trim();
+  if(!text || !currentChatWith) return;
+  socket.emit("private-message", { to: currentChatWith, type: "text", text });
+  msgInput.value = "";
+}
+sendBtn.onclick = sendTextMessage;
+msgInput.addEventListener("keydown", e=>{
+  if(e.key === "Enter") sendTextMessage();
+  else if(currentChatWith) socket.emit("typing", { to: currentChatWith });
+});
+
+// ===== UPLOAD FILE (gambar/video/dokumen) =====
+attachBtn.onclick = () => fileInputHidden.click();
+
+fileInputHidden.onchange = async () => {
+  const file = fileInputHidden.files[0];
+  if(!file || !currentChatWith) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try{
+    const res = await fetch("/api/upload", { method:"POST", body: formData });
+    const data = await res.json();
+    if(!data.ok) return;
+
+    let type = "document";
+    if(file.type.startsWith("image/")) type = "image";
+    else if(file.type.startsWith("video/")) type = "video";
+
+    socket.emit("private-message", {
+      to: currentChatWith, type, fileUrl: data.url, fileName: file.name
+    });
+  }catch(e){
+    alert("Gagal upload file.");
+  }
+  fileInputHidden.value = "";
+};
+
+// ===== VOICE NOTE (rekam suara) =====
+let mediaRecorder, audioChunks = [];
+micBtn.onclick = async () => {
+  if(micBtn.classList.contains("recording")){
+    mediaRecorder.stop();
+    return;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = async () => {
+      micBtn.classList.remove("recording");
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(audioChunks, { type: "audio/webm" });
+      const formData = new FormData();
+      formData.append("file", blob, "voice-note.webm");
+      const res = await fetch("/api/upload", { method:"POST", body: formData });
+      const data = await res.json();
+      if(data.ok && currentChatWith){
+        socket.emit("private-message", {
+          to: currentChatWith, type: "voice", fileUrl: data.url
+        });
+      }
+    };
+    mediaRecorder.start();
+    micBtn.classList.add("recording");
+  }catch(e){
+    alert("Tidak bisa akses mikrofon.");
+  }
+};
+
+// ===== VIDEO/VOICE CALL (WebRTC) =====
+const ICE_SERVERS = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+let peerConnection = null;
+let localStream = null;
+let activeCallType = null;
+let activeCallWith = null;
+let isCaller = false;
+let pendingOffer = null;
+
+function resetCallUI(){
+  callOverlay.classList.remove("show");
+  incomingCallActions.style.display = "none";
+  activeCallControls.classList.add("hidden");
+  remoteVideo.classList.add("hidden");
+  localVideo.classList.add("hidden");
+  document.getElementById("callInfo").style.display = "flex";
+  callStatus.textContent = "Menghubungi...";
+}
+
+function cleanupCall(){
+  if(peerConnection){ peerConnection.close(); peerConnection = null; }
+  if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream = null; }
+  activeCallWith = null;
+  activeCallType = null;
+  resetCallUI();
+}
+
+async function startCall(withUser, type){
+  activeCallWith = withUser;
+  activeCallType = type;
+  isCaller = true;
+
+  callOverlay.classList.add("show");
+  callAvatar.textContent = withUser[0].toUpperCase();
+  callUsername.textContent = "@" + withUser;
+  callStatus.textContent = type === "video" ? "Memanggil video..." : "Memanggil suara...";
+  activeCallControls.classList.remove("hidden");
+
+  localStream = await navigator.mediaDevices.getUserMedia({
+    audio: true, video: type === "video"
+  });
+
+  if(type === "video"){
+    localVideo.srcObject = localStream;
+    localVideo.classList.remove("hidden");
+  }
+
+  peerConnection = new RTCPeerConnection(ICE_SERVERS);
+  localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+
+  peerConnection.ontrack = (e) => {
+    remoteVideo.srcObject = e.streams[0];
+    remoteVideo.classList.remove("hidden");
+    document.getElementById("callInfo").style.display = "none";
+  };
+  peerConnection.onicecandidate = (e) => {
+    if(e.candidate) socket.emit("ice-candidate", { to: withUser, candidate: e.candidate });
+  };
+
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+  socket.emit("call-user", { to: withUser, offer, callType: type });
+}
+
+voiceCallBtn.onclick = () => { if(currentChatWith) startCall(currentChatWith, "voice"); };
+videoCallBtn.onclick = () => { if(currentChatWith) startCall(currentChatWith, "video"); };
+
+socket.on("incoming-call", ({from, offer, callType}) => {
+  activeCallWith = from;
+  activeCallType = callType;
+  isCaller = false;
+  pendingOffer = offer;
+
+  callOverlay.classList.add("show");
+  callAvatar.textContent = from[0].toUpperCase();
+  callUsername.textContent = "@" + from;
+  callStatus.textContent = callType === "video" ? "Panggilan video masuk..." : "Panggilan suara masuk...";
+  incomingCallActions.style.display = "flex";
+});
+
+acceptCallBtn.onclick = async () => {
+  incomingCallActions.style.display = "none";
+  activeCallControls.classList.remove("hidden");
+  callStatus.textContent = "Menghubungkan...";
+
+  localStream = await navigator.mediaDevices.getUserMedia({
+    audio: true, video: activeCallType === "video"
+  });
+
+  if(activeCallType === "video"){
+    localVideo.srcObject = localStream;
+    localVideo.classList.remove("hidden");
+  }
+
+  peerConnection = new RTCPeerConnection(ICE_SERVERS);
+  localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+
+  peerConnection.ontrack = (e) => {
+    remoteVideo.srcObject = e.streams[0];
+    remoteVideo.classList.remove("hidden");
+    document.getElementById("callInfo").style.display = "none";
+  };
+  peerConnection.onicecandidate = (e) => {
+    if(e.candidate) socket.emit("ice-candidate", { to: activeCallWith, candidate: e.candidate });
+  };
+
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(pendingOffer));
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  socket.emit("call-answer", { to: activeCallWith, answer });
+};
+
+rejectCallBtn.onclick = () => {
+  socket.emit("call-rejected", { to: activeCallWith });
+  cleanupCall();
+};
+
+endCallBtn.onclick = () => {
+  if(activeCallWith) socket.emit("call-ended", { to: activeCallWith });
+  cleanupCall();
+};
+
+socket.on("call-answered", async ({answer}) => {
+  callStatus.textContent = "Tersambung";
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+});
+
+socket.on("ice-candidate", async ({candidate}) => {
+  if(peerConnection){
+    try{ await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); }catch(e){}
+  }
+});
+
+socket.on("call-rejected", () => {
+  callStatus.textContent = "Panggilan ditolak";
+  setTimeout(cleanupCall, 1200);
+});
+
+socket.on("call-failed", ({reason}) => {
+  callStatus.textContent = reason === "user-offline" ? "User sedang offline" : "Panggilan gagal";
+  setTimeout(cleanupCall, 1500);
+});
+
+socket.on("call-ended", () => {
+  callStatus.textContent = "Panggilan berakhir";
+  setTimeout(cleanupCall, 800);
+});
+</script>
+</body>
+</html>
